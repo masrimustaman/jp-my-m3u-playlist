@@ -1,0 +1,33 @@
+name: Merge M3U Files
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # This runs every day at midnight UTC
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Download M3U files
+        run: |
+          curl -o file1.m3u https://iptv-org.github.io/iptv/countries/my.m3u
+          curl -o file2.m3u https://raw.githubusercontent.com/luongz/iptv-jp/refs/heads/main/jp.m3u
+
+      - name: Merge M3U files
+        run: |
+          echo "#EXTM3U" > merged_playlist.m3u
+          cat file1.m3u >> merged_playlist.m3u
+          cat file2.m3u >> merged_playlist.m3u
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add merged_playlist.m3u
+          git commit -m "Update merged M3U file" || echo "No changes to commit"
+          git push
